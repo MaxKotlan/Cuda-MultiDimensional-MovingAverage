@@ -27,7 +27,7 @@ void print(DataSet &data){
 typedef dim3 Filter;
 
 __global__ void MovingAverage(DataSet input, Filter filter, DataSet output){
-
+    
 }
 
 DataSet createTestDataSet(){
@@ -57,9 +57,13 @@ DataSet createTestDataSet(){
     return d;
 }
 
-DataSet MovingAverage(DataSet &data, Filter &filter){
-    
-    return DataSet(1,2,3);
+DataSet MovingAverage(DataSet &input, Filter &filter){
+    DataSet output(
+        input.dimension.x - filter.x + 1,
+        input.dimension.y - filter.y + 1,
+        input.dimension.z - filter.z + 1
+    );
+    return output;
 }
 
 
