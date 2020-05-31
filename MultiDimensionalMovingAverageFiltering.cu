@@ -17,12 +17,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 struct DataSet{
     //~DataSet(){ delete [] flatData; }
     DataSet(){};
-    DataSet& operator=(const DataSet& other) {
-        dimension = other.dimension;
-        flatData = std::move(other.flatData);
-        flatDataSize = other.flatDataSize;
-        return *this;
-    }
     DataSet(unsigned int x, unsigned int y, unsigned int z){
         dimension = {x, y, z};
         flatDataSize = x*y*z;
@@ -44,8 +38,11 @@ void print(DataSet &data){
 
 typedef dim3 Filter;
 
-__global__ void MovingAverage(DataSet input, Filter filter, DataSet output){
-    
+__global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output){
+    unsigned int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx < output.flatDataSize){
+        output.flatData[idx] = 1.0;
+    }
 }
 
 DataSet createTestDataSet(){
@@ -97,6 +94,9 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
     gpuErrchk(cudaMalloc((void **)&device_input.flatData,  sizeof(float)*device_input.flatDataSize));
     gpuErrchk(cudaMalloc((void **)&device_output.flatData, sizeof(float)*device_output.flatDataSize));
     gpuErrchk(cudaMemcpy(device_input.flatData, input.flatData, sizeof(float)*device_input.flatDataSize, cudaMemcpyHostToDevice));
+
+    MovingAverageKernel<<<device_input.flatDataSize / 1024 + 1, 1024 >>>(device_input, filter, device_output);
+    gpuErrchk(cudaMemcpy(output.flatData, device_output.flatData, output.flatDataSize*sizeof(float), cudaMemcpyDeviceToHost));
 
     return std::move(output);
 }
