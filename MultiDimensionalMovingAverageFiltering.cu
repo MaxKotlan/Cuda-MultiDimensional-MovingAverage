@@ -38,16 +38,31 @@ void print(DataSet &data){
 
 typedef dim3 Filter;
 
+__device__
+int getGlobalIdx_3D_3D(){
+    int blockId = blockIdx.x + blockIdx.y * gridDim.x
+    + gridDim.x * gridDim.y * blockIdx.z;
+    int threadId = blockId * (blockDim.x * blockDim.y * blockDim.z)
+    + (threadIdx.z * (blockDim.x * blockDim.y))
+    + (threadIdx.y * blockDim.x) + threadIdx.x;
+    return threadId;
+}
+
 __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output){
     unsigned int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < output.flatDataSize){
+    unsigned int idy = blockDim.y * blockIdx.y + threadIdx.y;
+    unsigned int idz = blockDim.z * blockIdx.z + threadIdx.z;
+
+    unsigned int idglobal = getGlobalIdx_3D_3D();
+
+    if (idglobal < output.flatDataSize){
         float sum = 0;
         for (uint64_t x = 0; x < filter.x; x++)
             for (uint64_t y = 0; y < filter.y; y++)
                 for (uint64_t z = 0; z < filter.z; z++)
-                    sum += input.flatData[idx + x + filter.y*y + filter.z*z];
+                    sum += input.flatData[idx+x+ input.dimension.x * (idy+y + input.dimension.z*(idz + z))];
         sum /= (filter.x * filter.y * filter.z);
-        output.flatData[idx] = sum;
+        output.flatData[idglobal]=sum;
     }
 }
 
@@ -101,7 +116,13 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
     gpuErrchk(cudaMalloc((void **)&device_output.flatData, sizeof(float)*device_output.flatDataSize));
     gpuErrchk(cudaMemcpy(device_input.flatData, input.flatData, sizeof(float)*device_input.flatDataSize, cudaMemcpyHostToDevice));
 
-    MovingAverageKernel<<<device_input.flatDataSize / 1024 + 1, 1024 >>>(device_input, filter, device_output);
+    dim3 threadsperblock{ 1, 1, 1 };
+    dim3 blocksneeded = {
+        device_input.dimension.x / threadsperblock.x + 1,
+        device_input.dimension.y / threadsperblock.y + 1,
+        device_input.dimension.z / threadsperblock.z + 1
+    };
+    MovingAverageKernel<<<blocksneeded, threadsperblock >>>(device_input, filter, device_output);
     gpuErrchk(cudaMemcpy(output.flatData, device_output.flatData, output.flatDataSize*sizeof(float), cudaMemcpyDeviceToHost));
 
     return std::move(output);
