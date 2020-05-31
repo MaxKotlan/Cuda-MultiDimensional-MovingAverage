@@ -53,5 +53,4 @@ DataSet createTestDataSet(){
 int main(){
     DataSet data = createTestDataSet();
     print(data);
-    std::vector<float> input;
 }
