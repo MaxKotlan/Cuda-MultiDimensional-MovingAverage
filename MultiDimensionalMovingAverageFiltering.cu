@@ -41,7 +41,13 @@ typedef dim3 Filter;
 __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output){
     unsigned int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx < output.flatDataSize){
-        output.flatData[idx] = 1.0;
+        float sum = 0;
+        for (uint64_t x = 0; x < filter.x; x++)
+            for (uint64_t y = 0; y < filter.y; y++)
+                for (uint64_t z = 0; z < filter.z; z++)
+                    sum += input.flatData[idx + x + filter.y*y + filter.z*z];
+        sum /= (filter.x * filter.y * filter.z);
+        output.flatData[idx] = sum;
     }
 }
 
