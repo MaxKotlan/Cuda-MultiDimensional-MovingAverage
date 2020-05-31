@@ -14,8 +14,14 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 
 struct DataSet{
-    ~DataSet(){ delete [] flatData; }
+    //~DataSet(){ delete [] flatData; }
     DataSet(){};
+    DataSet& operator=(const DataSet& other) {
+        dimension = other.dimension;
+        flatData = std::move(other.flatData);
+        flatDataSize = other.flatDataSize;
+        return *this;
+    }
     DataSet(unsigned int x, unsigned int y, unsigned int z){
         dimension = {x, y, z};
         flatDataSize = x*y*z;
@@ -91,7 +97,7 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
     gpuErrchk(cudaMalloc((void **)&device_output.flatData, sizeof(float)*device_output.flatDataSize));
     gpuErrchk(cudaMemcpy(device_input.flatData, input.flatData, sizeof(float)*device_input.flatDataSize, cudaMemcpyHostToDevice));
 
-    return output;
+    return std::move(output);
 }
 
 
