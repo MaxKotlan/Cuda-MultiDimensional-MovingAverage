@@ -1,6 +1,7 @@
 #include <cuda.h>
 #include <iostream>
 #include <vector>
+#include <iomanip>
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -36,7 +37,7 @@ void print(DataSet &data){
     for (int i = 0; i < data.flatDataSize; i++){
         if (i%data.dimension.x == 0) std::cout << std::endl;
         if (i%(data.dimension.x*data.dimension.y) == 0) std::cout << std::endl;
-        std::cout << data.flatData[i] << "\t";
+        std::cout << std::setprecision(2) << std::fixed << data.flatData[i] << "\t";
     }
     std::cout << std::endl << std::endl;
 }
