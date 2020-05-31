@@ -4,6 +4,12 @@
 
 struct DataSet{
     ~DataSet(){ delete [] flatData; }
+    DataSet(){};
+    DataSet(unsigned int x, unsigned int y, unsigned int z){
+        dimension = {x, y, z};
+        flatDataSize = x*y*z;
+        flatData = new float[flatDataSize];
+    }
     dim3         dimension;
     float*       flatData;
     unsigned int flatDataSize;
@@ -15,6 +21,7 @@ void print(DataSet &data){
         if (i%(data.dimension.x*data.dimension.y) == 0) std::cout << std::endl;
         std::cout << data.flatData[i] << "\t";
     }
+    std::cout << std::endl << std::endl;
 }
 
 typedef dim3 Filter;
@@ -50,7 +57,19 @@ DataSet createTestDataSet(){
     return d;
 }
 
+DataSet MovingAverage(DataSet &data, Filter &filter){
+    
+    return DataSet(1,2,3);
+}
+
+
 int main(){
-    DataSet data = createTestDataSet();
-    print(data);
+    DataSet input = createTestDataSet();
+    std::cout << "Input DataSet: " << std::endl;
+    print(input);
+    std::cout << "==========seperate line ==========" << std::endl;
+
+    Filter filter{2,2,2};
+    DataSet output = MovingAverage(input, filter);
+    print(output);
 }
