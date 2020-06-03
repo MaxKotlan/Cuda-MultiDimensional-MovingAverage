@@ -1,2 +1,2 @@
 all:
-	nvcc -o MultiDimensionalMovingAverageFiltering MultiDimensionalMovingAverageFiltering.cu
+	nvcc -g -G -o MultiDimensionalMovingAverageFiltering MultiDimensionalMovingAverageFiltering.cu
