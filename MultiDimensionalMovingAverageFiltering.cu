@@ -55,24 +55,26 @@ __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output
 
     uint64_t idglobal = getGlobalIdx_3D_3D();
 
-    if (idglobal < output.flatDataSize && 
-        idx <= output.dimension.x &&
+    uint64_t testid= 14;
+    printf("glob: %d\n", idglobal);
+    if (idglobal < output.flatDataSize //&& 
+        /*idx <= output.dimension.x &&
         idy <= output.dimension.y &&
-        idz <= output.dimension.z 
+        idz <= output.dimension.z */
     ){
         float sum = 0;
-        if (idglobal == 69)
+        if (idglobal == testid)
         printf("Output 0 = (");
         for (uint64_t z = 0; z < filter.z; z++)
             for (uint64_t y = 0; y < filter.y; y++)
                 for (uint64_t x = 0; x < filter.x; x++) {
                     unsigned int iddd = idx+x+ input.dimension.x * ((idy+y) + input.dimension.y*(idz + z));
                     sum += input.flatData[iddd];
-                    if (idglobal == 69)
+                    if (idglobal == testid)
                         printf(" %f [%d] + \n", input.flatData[iddd], iddd);
                 }
         sum /= (float)(filter.x * filter.y * filter.z);
-        if (idglobal == 69)
+        if (idglobal == testid)
             printf(" ) / %f = %f", (float)filter.x * filter.y * filter.z, sum);
         output.flatData[idglobal]=sum;
     }
@@ -113,6 +115,8 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
         input.dimension.z - filter.z + 1
     );
 
+    std::cout << "Creating output space: " << output.dimension.x << ", " << output.dimension.y << ", " << output.dimension.z << std::endl;
+
     /*Initalize data on the device*/
     DataSet device_input;
     device_input.dimension    = input.dimension;
@@ -130,10 +134,11 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
 
     dim3 threadsperblock{ 1, 1, 1 };
     dim3 blocksneeded = {
-        device_output.dimension.x / threadsperblock.x + 1,
-        device_output.dimension.y / threadsperblock.y + 1,
-        device_output.dimension.z / threadsperblock.z + 1
+        output.dimension.x / threadsperblock.x,
+        output.dimension.y / threadsperblock.y,
+        output.dimension.z / threadsperblock.z
     };
+    std::cout << "Blocks Needed: " << blocksneeded.x << ", " << blocksneeded.y << ", " << blocksneeded.z << std::endl;
     MovingAverageKernel<<< blocksneeded, threadsperblock >>>(device_input, filter, device_output);
     gpuErrchk(cudaMemcpy(output.flatData, device_output.flatData, output.flatDataSize*sizeof(float), cudaMemcpyDeviceToHost));
 
