@@ -61,18 +61,18 @@ __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output
         idz <= output.dimension.z 
     ){
         float sum = 0;
-        if (idglobal == 0)
+        if (idglobal == 69)
         printf("Output 0 = (");
         for (uint64_t z = 0; z < filter.z; z++)
             for (uint64_t y = 0; y < filter.y; y++)
                 for (uint64_t x = 0; x < filter.x; x++) {
-                    unsigned int iddd = idx+x+ input.dimension.x * ((idy+y) + input.dimension.z*(idz + z));
+                    unsigned int iddd = idx+x+ input.dimension.x * ((idy+y) + input.dimension.y*(idz + z));
                     sum += input.flatData[iddd];
-                    if (idglobal == 0)
+                    if (idglobal == 69)
                         printf(" %f [%d] + \n", input.flatData[iddd], iddd);
                 }
         sum /= (float)(filter.x * filter.y * filter.z);
-        if (idglobal == 0)
+        if (idglobal == 69)
             printf(" ) / %f = %f", (float)filter.x * filter.y * filter.z, sum);
         output.flatData[idglobal]=sum;
     }
