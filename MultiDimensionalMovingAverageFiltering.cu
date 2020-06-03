@@ -56,7 +56,8 @@ __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output
     uint64_t idglobal = getGlobalIdx_3D_3D();
 
     uint64_t testid= 14;
-    printf("glob: %d\n", idglobal);
+    /*if (idglobal == 69)
+    printf("glob: %d\n", idglobal);*/
     if (idglobal < output.flatDataSize //&& 
         /*idx <= output.dimension.x &&
         idy <= output.dimension.y &&
