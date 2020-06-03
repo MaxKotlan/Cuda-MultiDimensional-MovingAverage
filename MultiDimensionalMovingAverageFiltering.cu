@@ -65,11 +65,11 @@ __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output
     ){
         float sum = 0;
         if (idglobal == testid)
-        printf("Output 0 = (");
+        printf("Output %d = (", testid);
         for (uint64_t z = 0; z < filter.z; z++)
             for (uint64_t y = 0; y < filter.y; y++)
                 for (uint64_t x = 0; x < filter.x; x++) {
-                    unsigned int iddd = idx+x+ input.dimension.x * ((idy+y) + input.dimension.y*(idz + z));
+                    uint64_t iddd = idx+x+ input.dimension.x * ((idy+y) + input.dimension.y*(idz + z));
                     sum += input.flatData[iddd];
                     if (idglobal == testid)
                         printf(" %f [%d] + \n", input.flatData[iddd], iddd);
@@ -77,7 +77,7 @@ __global__ void MovingAverageKernel(DataSet input, Filter filter, DataSet output
         sum /= (float)(filter.x * filter.y * filter.z);
         if (idglobal == testid)
             printf(" ) / %f = %f", (float)filter.x * filter.y * filter.z, sum);
-        output.flatData[idglobal]=sum;
+        output.flatData[idglobal]=idglobal;
     }
 }
 
@@ -116,6 +116,7 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
         input.dimension.z - filter.z + 1
     );
 
+    std::cout << "Input space: " << input.dimension.x << ", " << input.dimension.y << ", " << input.dimension.z << std::endl;
     std::cout << "Creating output space: " << output.dimension.x << ", " << output.dimension.y << ", " << output.dimension.z << std::endl;
 
     /*Initalize data on the device*/
@@ -133,7 +134,7 @@ DataSet MovingAverage(DataSet &input, Filter &filter){
     gpuErrchk(cudaMalloc((void **)&device_output.flatData, sizeof(float)*device_output.flatDataSize));
     gpuErrchk(cudaMemcpy(device_input.flatData, input.flatData, sizeof(float)*device_input.flatDataSize, cudaMemcpyHostToDevice));
 
-    dim3 threadsperblock{ 1, 1, 1 };
+    dim3 threadsperblock{ output.dimension.x, output.dimension.y, output.dimension.z };
     dim3 blocksneeded = {
         output.dimension.x / threadsperblock.x,
         output.dimension.y / threadsperblock.y,
